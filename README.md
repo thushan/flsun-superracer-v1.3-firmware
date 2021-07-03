@@ -2,6 +2,10 @@
 
 This repository contains the original snapshot of the [FLSun SuperRacer SKR 1.3.x Firmware](https://www.flsun3d.com/companyfile/24.html) within Github to make it easier to browse and see changes made.
 
+*Snapshot:* 2021-06-26 15:40:13
+
+You can see the main update [commit hash](https://github.com/thushan/flsun-speedracer-skr-firmware/commit/185cce6ae6525f595279b7590195f9cd1d7af23d) for all their changes for this snapshot.
+
 ## Features
 The firmware of MKS Robin Nano, based on [Marlin2.0.x](https://github.com/MarlinFirmware/Marlin), added the [LittlevGL](https://github.com/littlevgl/lvgl), supporting colourful GUI and touch screen. It is developed on PlatformIO, we hope more and more developers will participate the development of this repository.
 
