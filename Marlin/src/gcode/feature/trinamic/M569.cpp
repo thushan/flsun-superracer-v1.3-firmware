@@ -115,7 +115,13 @@ static void set_stealth_status(const bool enable, const int8_t target_extruder) 
     }
   }
 }
-
+void tmc_set_XYZ(const bool enable)//新增
+{
+  #define TMC_SET_STEALTH(Q) tmc_set_stealthChop(stepper##Q, enable);
+  TMC_SET_STEALTH(X);
+  TMC_SET_STEALTH(Y);
+  TMC_SET_STEALTH(Z);
+}
 static void say_stealth_status() {
   #define TMC_SAY_STEALTH_STATUS(Q) tmc_say_stealth_status(stepper##Q)
 

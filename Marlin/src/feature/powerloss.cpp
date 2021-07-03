@@ -53,11 +53,11 @@ uint32_t PrintJobRecovery::cmd_sdpos, // = 0
 #include "../module/printcounter.h"
 #include "../module/temperature.h"
 #include "../core/serial.h"
-
+#include "../module/settings.h"//新增
 #if ENABLED(FWRETRACT)
   #include "fwretract.h"
 #endif
-
+uint8_t sd_filename_size = 0;//新增
 #define DEBUG_OUT ENABLED(DEBUG_POWER_LOSS_RECOVERY)
 #include "../core/debug_out.h"
 
@@ -121,26 +121,35 @@ void PrintJobRecovery::check() {
  */
 void PrintJobRecovery::purge() {
   init();
-  card.removeJobRecoveryFile();
+   //card.removeJobRecoveryFile();
+  write_eeprom();//改动
 }
 
 /**
  * Load the recovery data, if it exists
  */
-void PrintJobRecovery::load() {
-  if (exists()) {
+void PrintJobRecovery::load() {//改动
+  /*if (exists()) {
     open(true);
     (void)file.read(&info, sizeof(info));
     close();
   }
-  debug(PSTR("Load"));
+  debug(PSTR("Load"));*/
 }
 
 /**
  * Set info fields that won't change
  */
-void PrintJobRecovery::prepare() {
+void PrintJobRecovery::prepare() {//改动
   card.getAbsFilename(info.sd_filename);  // SD filename
+  sd_filename_size = strlen(info.sd_filename);//新增
+  persistentStore.access_start();
+  persistentStore.write_data(983, (uint8_t*)&sd_filename_size, sizeof(sd_filename_size));
+  for(int i = 0;i < sd_filename_size;i++)
+  {
+    persistentStore.write_data(985 + i, (uint8_t*)&info.sd_filename[i], sizeof(info.sd_filename[i]));
+  }//新增
+  persistentStore.access_finish();
   cmd_sdpos = 0;
 }
 
@@ -157,7 +166,7 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=0*/
   #ifndef POWER_LOSS_MIN_Z_CHANGE
     #define POWER_LOSS_MIN_Z_CHANGE 0.05  // Vase-mode-friendly out of the box
   #endif
-
+  
   // Did Z change since the last call?
   if (force
     #if DISABLED(SAVE_EACH_CMD_MODE)      // Always save state when enabled
@@ -172,7 +181,6 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=0*/
     #if SAVE_INFO_INTERVAL_MS > 0
       next_save_ms = ms + SAVE_INFO_INTERVAL_MS;
     #endif
-
     // Set Head and Foot to matching non-zero values
     if (!++info.valid_head) ++info.valid_head; // non-zero in sequence
     //if (!IS_SD_PRINTING()) info.valid_head = 0;
@@ -182,7 +190,7 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=0*/
     info.current_position = current_position;
     info.feedrate = uint16_t(MMS_TO_MMM(feedrate_mm_s));
     info.zraise = zraise;
-
+    info.flag_duandian = true;//新增
     TERN_(GCODE_REPEAT_MARKERS, info.stored_repeat = repeat);
     TERN_(HAS_HOME_OFFSET, info.home_offset = home_offset);
     TERN_(HAS_POSITION_SHIFT, info.position_shift = position_shift);
@@ -232,10 +240,64 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=0*/
     info.flag.dryrun = !!(marlin_debug_flags & MARLIN_DEBUG_DRYRUN);
     info.flag.allow_cold_extrusion = TERN0(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude);
 
-    write();
+    write_eeprom();
+    //write();改动
   }
 }
+void PrintJobRecovery::write_eeprom()//新增
+{
+    int eeprom_pos_duandian = 900;
+    persistentStore.access_start();
 
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.valid_head, sizeof(info.valid_head));
+    eeprom_pos_duandian += sizeof(info.valid_head);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.valid_foot, sizeof(info.valid_foot));
+    eeprom_pos_duandian += sizeof(info.valid_foot);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.current_position.x, sizeof(info.current_position.x));
+    eeprom_pos_duandian += sizeof(info.current_position.x);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.current_position.y, sizeof(info.current_position.y));
+    eeprom_pos_duandian += sizeof(info.current_position.y);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.current_position.z, sizeof(info.current_position.z));
+    eeprom_pos_duandian += sizeof(info.current_position.z);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.current_position.e, sizeof(info.current_position.e));
+    eeprom_pos_duandian += sizeof(info.current_position.e);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.feedrate, sizeof(info.feedrate));
+    eeprom_pos_duandian += sizeof(info.feedrate);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.zraise, sizeof(info.zraise));
+    eeprom_pos_duandian += sizeof(info.zraise);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.position_shift.x, sizeof(info.position_shift.x));
+    eeprom_pos_duandian += sizeof(info.position_shift.x);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.position_shift.y, sizeof(info.position_shift.y));
+    eeprom_pos_duandian += sizeof(info.position_shift.y);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.position_shift.z, sizeof(info.position_shift.z));
+    eeprom_pos_duandian += sizeof(info.position_shift.z);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.volumetric_enabled, sizeof(info.volumetric_enabled));
+    eeprom_pos_duandian += sizeof(info.volumetric_enabled);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.target_temperature[0], sizeof(info.target_temperature[0]));
+    eeprom_pos_duandian += sizeof(info.target_temperature[0]);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.target_temperature_bed, sizeof(info.target_temperature_bed));
+    eeprom_pos_duandian += sizeof(info.target_temperature_bed);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.fan_speed[0], sizeof(info.fan_speed[0]));
+    eeprom_pos_duandian += sizeof(info.fan_speed[0]);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.flag.leveling, sizeof(info.flag.leveling));
+    eeprom_pos_duandian += sizeof(bool);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.fade, sizeof(info.fade));
+    eeprom_pos_duandian += sizeof(info.fade);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.print_job_elapsed, sizeof(info.print_job_elapsed));
+    eeprom_pos_duandian += sizeof(info.print_job_elapsed);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.axis_relative, sizeof(info.axis_relative));
+    eeprom_pos_duandian += sizeof(info.axis_relative);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.flag.dryrun, sizeof(info.flag.dryrun));
+    eeprom_pos_duandian += sizeof(bool);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.flag.allow_cold_extrusion, sizeof(info.flag.allow_cold_extrusion));
+    eeprom_pos_duandian += sizeof(bool);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.sdpos, sizeof(info.sdpos));
+    eeprom_pos_duandian += sizeof(info.sdpos);
+    persistentStore.write_data(eeprom_pos_duandian, (uint8_t*)&info.flag_duandian, sizeof(info.flag_duandian));
+    eeprom_pos_duandian += sizeof(info.flag_duandian);
+
+    persistentStore.access_finish();
+}
 #if PIN_EXISTS(POWER_LOSS)
 
   #if ENABLED(BACKUP_POWER_SUPPLY)
@@ -327,7 +389,7 @@ void PrintJobRecovery::write() {
  */
 void PrintJobRecovery::resume() {
 
-  char cmd[MAX_CMD_SIZE+16], str_1[16], str_2[16];
+  char cmd[MAX_CMD_SIZE+16], str_1[16], str_2[16],str_3[16];//改动
 
   const uint32_t resume_sdpos = info.sdpos; // Get here before the stepper ISR overwrites it
 
@@ -412,10 +474,10 @@ void PrintJobRecovery::resume() {
         gcode.process_subcommands_now(cmd);
       }
     #else
-      if (info.volumetric_enabled) {
+      /*if (info.volumetric_enabled) {//改动
         sprintf_P(cmd, PSTR("M200 D%s"), dtostrf(info.filament_size[0], 1, 3, str_1));
         gcode.process_subcommands_now(cmd);
-      }
+      }*/
     #endif
   #endif
 
@@ -476,21 +538,22 @@ void PrintJobRecovery::resume() {
   #endif
 
   // Move back to the saved XY
-  sprintf_P(cmd, PSTR("G1 X%s Y%s F3000"),
+  sprintf_P(cmd, PSTR("G1 X%s Y%s Z%s F3000"),//改动
     dtostrf(info.current_position.x, 1, 3, str_1),
-    dtostrf(info.current_position.y, 1, 3, str_2)
+    dtostrf(info.current_position.y, 1, 3, str_2),
+    dtostrf(info.current_position.z, 1, 3, str_3)
   );
   gcode.process_subcommands_now(cmd);
 
   // Move back to the saved Z
-  dtostrf(info.current_position.z, 1, 3, str_1);
+  //dtostrf(info.current_position.z, 1, 3, str_1);
   #if Z_HOME_DIR > 0 || ENABLED(POWER_LOSS_RECOVER_ZHOME)
     sprintf_P(cmd, PSTR("G1 Z%s F200"), str_1);
   #else
     gcode.process_subcommands_now_P(PSTR("G1 Z0 F200"));
     sprintf_P(cmd, PSTR("G92.9 Z%s"), str_1);
   #endif
-  gcode.process_subcommands_now(cmd);
+  //gcode.process_subcommands_now(cmd);
 
   // Restore the feedrate
   sprintf_P(cmd, PSTR("G1 F%d"), info.feedrate);

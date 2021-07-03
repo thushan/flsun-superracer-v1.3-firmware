@@ -601,6 +601,9 @@ void MarlinSettings::postprocess() {
   /**
    * M500 - Store Configuration
    */
+  extern uint16_t Flsun_language;//新增
+  extern millis_t total_time;//新增
+  extern uint8_t sd_filename_size;//新增
   bool MarlinSettings::save() {
     float dummyf = 0;
     char ver[4] = "ERR";
@@ -617,7 +620,10 @@ void MarlinSettings::postprocess() {
     EEPROM_SKIP(working_crc); // Skip the checksum slot
 
     working_crc = 0; // clear before first "real data"
-
+    //USBSerial.println(recovery.info.flag_duandian);
+    //persistentStore.write_data(958,(uint8_t*)&recovery.info.flag_duandian, sizeof(recovery.info.flag_duandian));
+    persistentStore.write_data(960, (uint8_t*)&Flsun_language, sizeof(Flsun_language));//新增，在eeprom960位置写入语言数据
+    persistentStore.write_data(970, (uint8_t*)&total_time, sizeof(total_time));//新增，在eeprom970位置写入总打印时间
     _FIELD_TEST(esteppers);
 
     const uint8_t esteppers = COUNT(planner.settings.axis_steps_per_mm) - XYZ;
@@ -1456,7 +1462,66 @@ void MarlinSettings::postprocess() {
     else {
       float dummyf = 0;
       working_crc = 0;  // Init to 0. Accumulated by EEPROM_READ
-
+      //persistentStore.read_data(958,(uint8_t*)&recovery.info.flag_duandian, sizeof(recovery.info.flag_duandian));
+      persistentStore.read_data(960, (uint8_t*)&Flsun_language, sizeof(Flsun_language));//新增
+      persistentStore.read_data(970, (uint8_t*)&total_time, sizeof(total_time));//新增，在eeprom970位置写入总打印时间
+      int eeprom_pos_duandian = 900;//新增
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.valid_head, sizeof(recovery.info.valid_head));
+    eeprom_pos_duandian += sizeof(recovery.info.valid_head);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.valid_foot, sizeof(recovery.info.valid_foot));
+    eeprom_pos_duandian += sizeof(recovery.info.valid_foot);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.current_position.x, sizeof(recovery.info.current_position.x));
+    eeprom_pos_duandian += sizeof(recovery.info.current_position.x);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.current_position.y, sizeof(recovery.info.current_position.y));
+    eeprom_pos_duandian += sizeof(recovery.info.current_position.y);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.current_position.z, sizeof(recovery.info.current_position.z));
+    eeprom_pos_duandian += sizeof(recovery.info.current_position.z);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.current_position.e, sizeof(recovery.info.current_position.e));
+    eeprom_pos_duandian += sizeof(recovery.info.current_position.e);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.feedrate, sizeof(recovery.info.feedrate));
+    eeprom_pos_duandian += sizeof(recovery.info.feedrate);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.zraise, sizeof(recovery.info.zraise));
+    eeprom_pos_duandian += sizeof(recovery.info.zraise);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.position_shift.x, sizeof(recovery.info.position_shift.x));
+    eeprom_pos_duandian += sizeof(recovery.info.position_shift.x);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.position_shift.y, sizeof(recovery.info.position_shift.y));
+    eeprom_pos_duandian += sizeof(recovery.info.position_shift.y);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.position_shift.z, sizeof(recovery.info.position_shift.z));
+    eeprom_pos_duandian += sizeof(recovery.info.position_shift.z);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.volumetric_enabled, sizeof(recovery.info.volumetric_enabled));
+    eeprom_pos_duandian += sizeof(recovery.info.volumetric_enabled);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.target_temperature[0], sizeof(recovery.info.target_temperature[0]));
+    eeprom_pos_duandian += sizeof(recovery.info.target_temperature[0]);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.target_temperature_bed, sizeof(recovery.info.target_temperature_bed));
+    eeprom_pos_duandian += sizeof(recovery.info.target_temperature_bed);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.fan_speed[0], sizeof(recovery.info.fan_speed[0]));
+    eeprom_pos_duandian += sizeof(recovery.info.fan_speed[0]);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.flag.leveling, sizeof(recovery.info.flag.leveling));
+    eeprom_pos_duandian += sizeof(bool);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.fade, sizeof(recovery.info.fade));
+    eeprom_pos_duandian += sizeof(recovery.info.fade);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.print_job_elapsed, sizeof(recovery.info.print_job_elapsed));
+    eeprom_pos_duandian += sizeof(recovery.info.print_job_elapsed);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.axis_relative, sizeof(recovery.info.axis_relative));
+    eeprom_pos_duandian += sizeof(recovery.info.axis_relative);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.flag.dryrun, sizeof(recovery.info.flag.dryrun));
+    eeprom_pos_duandian += sizeof(bool);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.flag.allow_cold_extrusion, sizeof(recovery.info.flag.allow_cold_extrusion));
+    eeprom_pos_duandian += sizeof(bool);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.sdpos, sizeof(recovery.info.sdpos));
+    eeprom_pos_duandian += sizeof(recovery.info.sdpos);
+    persistentStore.read_data(eeprom_pos_duandian, (uint8_t*)&recovery.info.flag_duandian, sizeof(recovery.info.flag_duandian));
+    eeprom_pos_duandian += sizeof(recovery.info.flag_duandian);
+    persistentStore.read_data(983, (uint8_t*)&sd_filename_size, sizeof(sd_filename_size));
+    for(int i = 0;i < sd_filename_size;i++)
+    {
+      persistentStore.read_data(985 + i, (uint8_t*)&recovery.info.sd_filename[i], sizeof(recovery.info.sd_filename[i]));
+    }//新增
+    
+      USBSerial.print("Flsun language is :");
+      USBSerial.println(Flsun_language);
+      USBSerial.print("total time is :");
+      USBSerial.println(total_time);
       _FIELD_TEST(esteppers);
 
       // Number of esteppers may change
@@ -3876,5 +3941,8 @@ void MarlinSettings::reset() {
   }
 
 #endif // !DISABLE_M503
-
+float mesh_point(int I,int J)//新增
+{
+  return z_values[I][J];
+}
 #pragma pack(pop)

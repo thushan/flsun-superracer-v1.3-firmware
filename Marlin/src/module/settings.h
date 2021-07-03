@@ -37,7 +37,6 @@ class MarlinSettings {
 
     static void reset();
     static bool save();    // Return 'true' if data was saved
-
     FORCE_INLINE static bool init_eeprom() {
       reset();
       #if ENABLED(EEPROM_SETTINGS)
@@ -109,3 +108,4 @@ class MarlinSettings {
 };
 
 extern MarlinSettings settings;
+float mesh_point(int I,int J);//新增

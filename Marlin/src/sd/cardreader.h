@@ -44,7 +44,8 @@ extern const char M23_STR[], M24_STR[];
 #define MAXPATHNAMELENGTH  (1 + (MAXDIRNAMELENGTH + 1) * (MAX_DIR_DEPTH) + 1 + FILENAME_LENGTH) // "/" + N * ("ADIRNAME/") + "filename.ext"
 
 #include "SdFile.h"
-
+extern int file_count;//新增
+extern int i_num ;//新增
 typedef struct {
   bool saving:1,
        logging:1,

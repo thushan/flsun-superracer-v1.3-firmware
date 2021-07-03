@@ -26,11 +26,11 @@
 //
 // Trinamic Stallguard pins
 //
-#define X_DIAG_PIN                         P1_29  // X-
-#define Y_DIAG_PIN                         P1_27  // Y-
-#define Z_DIAG_PIN                         P1_25  // Z-
-#define E0_DIAG_PIN                        P1_28  // X+
-#define E1_DIAG_PIN                        P1_26  // Y+
+//#define X_DIAG_PIN                         P1_29  // X-
+//#define Y_DIAG_PIN                         P1_27  // Y-
+//#define Z_DIAG_PIN                         P1_25  // Z-
+//#define E0_DIAG_PIN                        P1_28  // X+
+//#define E1_DIAG_PIN                        P1_26  // Y+
 
 //
 // Limit Switches
@@ -91,7 +91,7 @@
 // Filament Runout Sensor
 //
 #ifndef FIL_RUNOUT_PIN
-  #define FIL_RUNOUT_PIN                   P1_28
+  #define FIL_RUNOUT_PIN                   P1_29
 #endif
 
 //
@@ -371,7 +371,7 @@
 //
 
 #ifndef SDCARD_CONNECTION
-  #define SDCARD_CONNECTION                  LCD
+  #define SDCARD_CONNECTION                  ONBOARD
 #endif
 
 #if SD_CONNECTION_IS(LCD)

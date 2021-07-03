@@ -226,7 +226,7 @@
 //#define POWER_LOSS_PIN                    PW_DET
 //#define PS_ON_PIN                         PW_OFF
 
-//#define MKSPWC
+#define MKSPWC
 #ifdef MKSPWC
   #define SUICIDE_PIN                       PW_OFF   // Enable MKSPWC SUICIDE PIN
   #define SUICIDE_PIN_INVERTING             false // Enable MKSPWC PIN STATE
@@ -254,7 +254,7 @@
 #define WIFI_RESET_PIN                    PC14  // MKS ESP WIFI RESET PIN
 
 #ifndef SDCARD_CONNECTION
-  #define SDCARD_CONNECTION              ONBOARD
+  #define SDCARD_CONNECTION               ONBOARD
 #endif
 
 //
@@ -317,10 +317,10 @@
 
 // LCD / Controller
 #define SPI_FLASH
-#define HAS_SPI_FLASH                          1
-#define SPI_DEVICE                             2
-#define SPI_FLASH_SIZE                 0x1000000
 #if ENABLED(SPI_FLASH)
+  #define HAS_SPI_FLASH                     1
+  #define SPI_DEVICE                        2
+  #define SPI_FLASH_SIZE                    0x1000000
   #define W25QXX_CS_PIN                     PB12
   #define W25QXX_MOSI_PIN                   PC3
   #define W25QXX_MISO_PIN                   PC2
@@ -405,13 +405,8 @@
 
   #define TFT_BUFFER_SIZE                  14400
 
-#elif HAS_SPI_LCD
-  #define BEEPER_PIN                        PC5
-  #define BTN_ENC                           PG2
-  #define LCD_PINS_ENABLE                   PG0
-  #define LCD_PINS_RS                       PG1
-  #define BTN_EN1                           PG5
-  #define BTN_EN2                           PG4
+#else
+
   #define LCD_BACKLIGHT_PIN                 -1
 
   // MKS MINI12864 and MKS LCD12864B; If using MKS LCD12864A (Need to remove RPK2 resistor)

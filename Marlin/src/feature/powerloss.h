@@ -92,12 +92,12 @@ typedef struct {
 
   // Relative axis modes
   uint8_t axis_relative;
-
+  bool flag_duandian;//新增
   // Misc. Marlin flags
   struct {
-    bool dryrun:1;                // M111 S8
-    bool allow_cold_extrusion:1;  // M302 P1
-    TERN_(HAS_LEVELING, bool leveling:1);
+    bool dryrun;                // M111 S8 改动
+    bool allow_cold_extrusion;  // M302 P1 改动
+    TERN_(HAS_LEVELING, bool leveling);//改动
   } flag;
 
   uint8_t valid_foot;
@@ -144,7 +144,7 @@ class PrintJobRecovery {
     static void enable(const bool onoff);
     static void changed();
 
-    static inline bool exists() { return card.jobRecoverFileExists(); }
+    static inline bool exists() { return info.flag_duandian;}//改动
     static inline void open(const bool read) { card.openJobRecoveryFile(read); }
     static inline void close() { file.close(); }
 
@@ -156,7 +156,7 @@ class PrintJobRecovery {
 
     static void load();
     static void save(const bool force=ENABLED(SAVE_EACH_CMD_MODE), const float zraise=0);
-
+    static void write_eeprom();//新增
     #if PIN_EXISTS(POWER_LOSS)
       static inline void outage() {
         if (enabled && READ(POWER_LOSS_PIN) == POWER_LOSS_STATE)

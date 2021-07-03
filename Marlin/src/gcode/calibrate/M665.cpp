@@ -52,9 +52,9 @@
     if (parser.seen('X')) delta_tower_angle_trim.a  = parser.value_float();
     if (parser.seen('Y')) delta_tower_angle_trim.b  = parser.value_float();
     if (parser.seen('Z')) delta_tower_angle_trim.c  = parser.value_float();
-    if (parser.seen('A')) delta_diagonal_rod_trim.a = parser.value_float();
-    if (parser.seen('B')) delta_diagonal_rod_trim.b = parser.value_float();
-    if (parser.seen('C')) delta_diagonal_rod_trim.c = parser.value_float();
+    if (parser.seen('A')) delta_diagonal_rod_trim.a += parser.value_float();
+    if (parser.seen('B')) delta_diagonal_rod_trim.b += parser.value_float();
+    if (parser.seen('C')) delta_diagonal_rod_trim.c += parser.value_float();
     recalc_delta_settings();
   }
 

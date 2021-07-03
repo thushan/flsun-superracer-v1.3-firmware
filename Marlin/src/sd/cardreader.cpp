@@ -62,6 +62,26 @@
 PGMSTR(M23_STR, "M23 %s");
 PGMSTR(M24_STR, "M24");
 
+
+#define MAX_FILE_COUNT 80//新增
+struct FILE_INFO //要在b.c中使用a.c中的结构体，除了用extern声明，结构体还要在写出来一遍
+{
+  char filename[13];
+  char longfilename[30];
+  char path[30];
+};
+extern struct FILE_INFO filename_info[MAX_FILE_COUNT];
+extern int file_count;
+extern int only_file_count;
+extern int floder_num;
+struct FLODER
+{
+  char floder_name[13];
+  int first_one;
+  int last_one;
+
+};
+extern struct FLODER floder[30];//新增
 // public:
 
 card_flags_t CardReader::flag;
@@ -264,7 +284,12 @@ void CardReader::printListing(SdFile parent, const char * const prepend/*=nullpt
       strcpy(path, prepend_is_empty ? "/" : prepend); // root slash if prepend is empty
       strcat(path, dosFilename);                      // FILENAME_LENGTH characters maximum
       strcat(path, "/");                              // 1 character
-
+      //计算一级子目录的数量和保存
+      if(prepend_is_empty && is_dir_or_gcode(p))//新增
+      {
+        strcpy(floder[floder_num].floder_name,dosFilename);
+        floder_num += 1;
+      }
       // Serial.print(path);
 
       // Get a new directory object using the full path
@@ -281,6 +306,27 @@ void CardReader::printListing(SdFile parent, const char * const prepend/*=nullpt
       createFilename(filename, p);
       if (prepend) SERIAL_ECHO(prepend);
       SERIAL_ECHO(filename);
+      if(prepend)//新增
+      {
+        strcpy(filename_info[i_num].path,prepend);
+        strcpy(filename_info[i_num].filename,filename);
+        strcpy(filename_info[i_num].longfilename,longFilename);
+        i_num--;//文件夹下边的gcode从后往前放
+      }
+      else//新增
+      {
+        const char root_path []= "/";
+        strcpy(filename_info[only_file_count].filename,filename);
+        strcpy(filename_info[only_file_count].path,root_path);
+        strncpy(filename_info[only_file_count].longfilename,longFilename,30);
+        filename_info[only_file_count].longfilename[29] = '\0';
+        only_file_count++;//根目录下的gcode从前往后放
+      }
+      file_count += 1;
+      if(file_count >= MAX_FILE_COUNT)
+      {
+        return ;
+      }
       SERIAL_CHAR(' ');
       SERIAL_ECHOLN(p.fileSize);
     }
@@ -292,6 +338,9 @@ void CardReader::printListing(SdFile parent, const char * const prepend/*=nullpt
 //
 void CardReader::ls() {
   if (flag.mounted) {
+    only_file_count = 0;//新增
+    file_count = 0;
+    floder_num = 0;
     root.rewind();
     printListing(root);
   }
@@ -371,6 +420,9 @@ void CardReader::printFilename() {
       if (longFilename[0]) {
         SERIAL_ECHO(' ');
         SERIAL_ECHO(longFilename);
+        char buf_null[30] = "                             ";//新增
+        print_thr_adress_string(0x25,0x20,buf_null);
+        print_thr_adress_string(0x25,0x20,longFilename);
       }
     #endif
   }
@@ -719,6 +771,15 @@ void CardReader::report_status() {
     SERIAL_ECHOPAIR(STR_SD_PRINTING_BYTE, sdpos);
     SERIAL_CHAR('/');
     SERIAL_ECHOLN(filesize);
+    uint8_t progress = percentDone();//新增
+    change_button(0x12,0x60,progress);
+    char buf_null[6] = {      };
+    millis_t t = print_job_timer.duration();
+    t += 60;//新增，为了更准确的表示时间
+    char buffer[6] = {0};
+    sprintf_P(buffer,"%02ld:%02ld",t/3600,(t%3600)/60);
+    print_thr_adress_string(0x10,0xD0,buf_null);
+    print_thr_adress_string(0x10,0xD0,buffer);
   }
   else
     SERIAL_ECHOLNPGM(STR_SD_NOT_PRINTING);
@@ -1223,6 +1284,10 @@ void CardReader::fileHasFinished() {
 
   endFilePrint(TERN_(SD_RESORT, true));
   marlin_state = MF_SD_COMPLETE;
+  char buf_null[10] = "         ";//新增
+  print_thr_adress_string(0x10,0xF0,buf_null);//清空进度
+  change_button(0x12,0x60,0);
+  jump_to(0x17);
 }
 
 #if ENABLED(AUTO_REPORT_SD_STATUS)

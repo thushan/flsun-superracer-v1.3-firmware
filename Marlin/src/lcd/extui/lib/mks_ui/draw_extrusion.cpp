@@ -56,9 +56,9 @@ static void event_handler(lv_obj_t *obj, lv_event_t event) {
   switch (obj->mks_obj_id) {
     case ID_E_ADD:
       #if ENABLED(SINGLENOZZLE)
-      if (thermalManager.temp_hotend[0].celsius >= EXTRUDE_MINTEMP) {
+      if ((thermalManager.temp_hotend[0].celsius >= EXTRUDE_MINTEMP) && && (queue.length <= (BUFSIZE - 3))) {
       #else
-      if (thermalManager.temp_hotend[uiCfg.curSprayerChoose].celsius >= EXTRUDE_MINTEMP) {
+      if ((thermalManager.temp_hotend[uiCfg.curSprayerChoose].celsius >= EXTRUDE_MINTEMP) && (queue.length <= (BUFSIZE - 3))) {
       #endif
         queue.enqueue_now_P(PSTR("G91"));
         sprintf_P((char *)public_buf_l, PSTR("G1 E%d F%d"), uiCfg.extruStep, 60 * uiCfg.extruSpeed);
@@ -70,9 +70,9 @@ static void event_handler(lv_obj_t *obj, lv_event_t event) {
       break;
     case ID_E_DEC:
       #if ENABLED(SINGLENOZZLE)
-      if (thermalManager.temp_hotend[0].celsius >= EXTRUDE_MINTEMP) {
+      if ((thermalManager.temp_hotend[0].celsius >= EXTRUDE_MINTEMP) && (queue.length <= (BUFSIZE - 3))) {
       #else
-      if (thermalManager.temp_hotend[uiCfg.curSprayerChoose].celsius >= EXTRUDE_MINTEMP) {
+      if ((thermalManager.temp_hotend[uiCfg.curSprayerChoose].celsius >= EXTRUDE_MINTEMP) && (queue.length <= (BUFSIZE - 3))) {
       #endif
         queue.enqueue_now_P(PSTR("G91"));
         sprintf_P((char *)public_buf_l, PSTR("G1 E%d F%d"), 0 - uiCfg.extruStep, 60 * uiCfg.extruSpeed);

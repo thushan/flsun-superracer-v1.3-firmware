@@ -26,7 +26,7 @@
 template <typename Helper>
 struct AutoReporter {
   millis_t next_report_ms;
-  uint8_t report_interval;
+  uint8_t report_interval = 2;//改动
   #if HAS_MULTI_SERIAL
     serial_index_t report_port_mask;
     AutoReporter() : report_port_mask(SERIAL_ALL) {}

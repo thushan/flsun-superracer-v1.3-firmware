@@ -243,6 +243,11 @@ const char str_t_thermal_runaway[] PROGMEM = STR_T_THERMAL_RUNAWAY,
     if (target >= FAN_COUNT) return;
 
     fan_speed[target] = speed;
+    char cmd[20] = {0};//新增
+    sprintf_P(cmd,"%d",speed);
+    char buf_null[20] = "                 ";
+    print_thr_adress_string(0x12,0x40,buf_null);
+    print_thr_adress_string(0x12,0x40,cmd);
 
     TERN_(REPORT_FAN_CHANGE, report_fan_speed(target));
   }
@@ -866,6 +871,16 @@ void Temperature::max_temp_error(const heater_id_t heater_id) {
   #if ENABLED(DWIN_CREALITY_LCD) && (HAS_HOTEND || HAS_HEATED_BED)
     DWIN_Popup_Temperature(1);
   #endif
+  if(heater_id == H_E0)//新增
+  {
+    char cmd[15] = "error:TH-MAX";
+    print_thr_adress_string(0x14,0x90,cmd);
+  }
+  if(heater_id == H_BED)
+  {
+    char cmd[15] = "error:TB-MAX";
+    print_thr_adress_string(0x14,0x90,cmd);
+  }
   _temp_error(heater_id, PSTR(STR_T_MAXTEMP), GET_TEXT(MSG_ERR_MAXTEMP));
 }
 
@@ -873,6 +888,16 @@ void Temperature::min_temp_error(const heater_id_t heater_id) {
   #if ENABLED(DWIN_CREALITY_LCD) && (HAS_HOTEND || HAS_HEATED_BED)
     DWIN_Popup_Temperature(0);
   #endif
+  if(heater_id == H_E0)//新增
+  {
+    char cmd[15] = "error:TH-MIN";
+    print_thr_adress_string(0x14,0x90,cmd);
+  }
+  if(heater_id == H_BED)
+  {
+    char cmd[15] = "error:TB-MIN";
+    print_thr_adress_string(0x14,0x90,cmd);
+  }
   _temp_error(heater_id, PSTR(STR_T_MINTEMP), GET_TEXT(MSG_ERR_MINTEMP));
 }
 
@@ -2125,6 +2150,8 @@ void Temperature::init() {
         state = TRRunaway;
 
       case TRRunaway:
+        char cmd[20] = "error:TH-Runaway";//新增
+        print_thr_adress_string(0x14,0x90,cmd);
         TERN_(DWIN_CREALITY_LCD, DWIN_Popup_Temperature(0));
         _temp_error(heater_id, str_t_thermal_runaway, GET_TEXT(MSG_THERMAL_RUNAWAY));
     }
@@ -3029,6 +3056,22 @@ void Temperature::tick() {
         default: k = 'B'; break;
       #endif
     }
+    char buf1[6] = {0};//新增
+    char buf2[6] = {0};
+    dtostrf(c,2,0,buf1);
+    dtostrf(t,2,0,buf2);
+    strcat(buf1,"  ");
+    strcat(buf2,"  ");
+    if(k == 'T')
+    {
+      print_thr_adress_string(0x10,0x10,buf1);
+      print_thr_adress_string(0x10,0x20,buf2);
+    }
+    if(k == 'B')
+    {
+      print_thr_adress_string(0x10,0x30,buf1);
+      print_thr_adress_string(0x10,0x40,buf2);
+    }
     SERIAL_CHAR(' ', k);
     #if HAS_MULTI_HOTEND
       if (e >= 0) SERIAL_CHAR('0' + e);
@@ -3121,7 +3164,6 @@ void Temperature::tick() {
       }
     #endif
   }
-
   #if ENABLED(AUTO_REPORT_TEMPERATURES)
     AutoReporter<Temperature::AutoReportTemp> Temperature::auto_reporter;
     void Temperature::AutoReportTemp::report() {
@@ -3211,6 +3253,7 @@ void Temperature::tick() {
         }
 
         idle();
+        get_serial1_commands();//新增
         gcode.reset_stepper_timeout(); // Keep steppers powered
 
         const float temp = degHotend(target_extruder);
@@ -3338,6 +3381,7 @@ void Temperature::tick() {
         }
 
         idle();
+        get_serial1_commands();//新增，idle()中的获取命令是等buf不满时才读取，因此不能用于开头的取消打印
         gcode.reset_stepper_timeout(); // Keep steppers powered
 
         const float temp = degBed();

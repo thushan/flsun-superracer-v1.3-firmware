@@ -463,3 +463,4 @@ FORCE_INLINE void set_all_unhomed()                       { axis_homed = axis_tr
   sensorless_t start_sensorless_homing_per_axis(const AxisEnum axis);
   void end_sensorless_homing_per_axis(const AxisEnum axis, sensorless_t enable_stealth);
 #endif
+float get_Z_pos();//新增

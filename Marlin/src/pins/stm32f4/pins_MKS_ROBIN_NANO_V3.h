@@ -226,7 +226,7 @@
 #define WIFI_RESET_PIN                    PE9   // MKS ESP WIFI RESET PIN
 
 #ifndef SDCARD_CONNECTION
-  #define SDCARD_CONNECTION              ONBOARD
+  #define SDCARD_CONNECTION               ONBOARD
 #endif
 
 //
@@ -264,10 +264,10 @@
 //
 // LCD / Controller
 #define SPI_FLASH
-#define HAS_SPI_FLASH                          1
-#define SPI_DEVICE                             2
-#define SPI_FLASH_SIZE                 0x1000000
 #if ENABLED(SPI_FLASH)
+  #define HAS_SPI_FLASH                     1
+  #define SPI_DEVICE                        2
+  #define SPI_FLASH_SIZE                    0x1000000
   #define W25QXX_CS_PIN                     PB12
   #define W25QXX_MOSI_PIN                   PC3
   #define W25QXX_MISO_PIN                   PC2
@@ -339,7 +339,7 @@
 
   #define TFT_BUFFER_SIZE                  14400
 
-#elif HAS_SPI_LCD
+#else
   #define BEEPER_PIN                        PC5
   #define BTN_ENC                           PE13
   #define LCD_PINS_ENABLE                   PD13

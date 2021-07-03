@@ -35,7 +35,7 @@ GCodeQueue queue;
 #include "../module/planner.h"
 #include "../module/temperature.h"
 #include "../MarlinCore.h"
-
+#include "../feature/runout.h"//新增
 #if ENABLED(PRINTER_EVENT_LEDS)
   #include "../feature/leds/printer_event_leds.h"
 #endif
@@ -59,7 +59,7 @@ GCodeQueue queue;
 #if ENABLED(GCODE_REPEAT_MARKERS)
   #include "../feature/repeat.h"
 #endif
-
+extern int my_print_state;//新增
 // Frequently used G-code strings
 PGMSTR(G28_STR, "G28");
 
@@ -442,6 +442,13 @@ inline bool process_line_done(uint8_t &sis, char (&buff)[MAX_CMD_SIZE], int &ind
  * left on the serial port.
  */
 void GCodeQueue::get_serial_commands() {
+   if(my_print_state != PAUSING)//新增
+  {
+  TERN_(HAS_FILAMENT_SENSOR, runout.my_run());
+  }
+ #if NUM_SERIAL > 1 //新增
+    get_serial1_commands();
+  #endif
   static char serial_line_buffer[NUM_SERIAL][MAX_CMD_SIZE];
 
   static uint8_t serial_input_state[NUM_SERIAL] = { PS_NORMAL };
@@ -472,10 +479,10 @@ void GCodeQueue::get_serial_commands() {
   /**
    * Loop while serial characters are incoming and the queue is not full
    */
-  while (length < BUFSIZE && serial_data_available()) {
-    LOOP_L_N(p, NUM_SERIAL) {
+  while (length < BUFSIZE && MYSERIAL0.available())  {//改动
+    for (uint8_t i = 0; i < 1; ++i)  {//改动
 
-      const int c = read_serial(p);
+      const int c = read_serial(i);//改动
       if (c < 0) continue;
 
       #if ENABLED(MEATPACK)
@@ -492,10 +499,10 @@ void GCodeQueue::get_serial_commands() {
         if (ISEOL(serial_char)) {
 
           // Reset our state, continue if the line was empty
-          if (process_line_done(serial_input_state[p], serial_line_buffer[p], serial_count[p]))
+          if (process_line_done(serial_input_state[i], serial_line_buffer[i], serial_count[i]))//改动
             continue;
 
-          char* command = serial_line_buffer[p];
+          char* command = serial_line_buffer[i];//改动
 
           while (*command == ' ') command++;                   // Skip leading spaces
           char *npos = (*command == 'N') ? command : nullptr;  // Require the N parameter to start the line
@@ -511,25 +518,25 @@ void GCodeQueue::get_serial_commands() {
 
             const long gcode_N = strtol(npos + 1, nullptr, 10);
 
-            if (gcode_N != last_N[p] + 1 && !M110)
-              return gcode_line_error(PSTR(STR_ERR_LINE_NO), p);
+            if (gcode_N != last_N[i] + 1 && !M110)//改动
+              return gcode_line_error(PSTR(STR_ERR_LINE_NO), i);//改动
 
             char *apos = strrchr(command, '*');
             if (apos) {
               uint8_t checksum = 0, count = uint8_t(apos - command);
               while (count) checksum ^= command[--count];
               if (strtol(apos + 1, nullptr, 10) != checksum)
-                return gcode_line_error(PSTR(STR_ERR_CHECKSUM_MISMATCH), p);
+                return gcode_line_error(PSTR(STR_ERR_CHECKSUM_MISMATCH), i);//改动
             }
             else
-              return gcode_line_error(PSTR(STR_ERR_NO_CHECKSUM), p);
+              return gcode_line_error(PSTR(STR_ERR_NO_CHECKSUM), i);//改动
 
-            last_N[p] = gcode_N;
+            last_N[i] = gcode_N;//改动
           }
           #if ENABLED(SDSUPPORT)
             // Pronterface "M29" and "M29 " has no line number
             else if (card.flag.saving && !is_M29(command))
-              return gcode_line_error(PSTR(STR_ERR_NO_CHECKSUM), p);
+              return gcode_line_error(PSTR(STR_ERR_NO_CHECKSUM), i);//改动
           #endif
 
           //
@@ -547,7 +554,7 @@ void GCodeQueue::get_serial_commands() {
                 #if ENABLED(BEZIER_CURVE_SUPPORT)
                   case 5:
                 #endif
-                  PORT_REDIRECT(SERIAL_PORTMASK(p));     // Reply to the serial port that sent the command
+                  PORT_REDIRECT(SERIAL_PORTMASK(i)); //改动    // Reply to the serial port that sent the command
                   SERIAL_ECHOLNPGM(STR_ERR_STOPPED);
                   LCD_MESSAGEPGM(MSG_STOPPED);
                   break;
@@ -569,14 +576,14 @@ void GCodeQueue::get_serial_commands() {
           #endif
 
           // Add the command to the queue
-          _enqueue(serial_line_buffer[p], true
+          _enqueue(serial_line_buffer[i], true//改动
             #if HAS_MULTI_SERIAL
-              , p
+              , i//改动
             #endif
           );
         }
         else
-          process_stream_char(serial_char, serial_input_state[p], serial_line_buffer[p], serial_count[p]);
+          process_stream_char(serial_char, serial_input_state[i], serial_line_buffer[i], serial_count[i]);//改动
 
       } // char_count loop
 

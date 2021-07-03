@@ -42,7 +42,11 @@ void GcodeSuite::M220() {
   if (parser.seen('R')) feedrate_percentage = backup_feedrate_percentage;
 
   if (parser.seenval('S')) feedrate_percentage = parser.value_int();
-
+  char buf_null[6] = "     ";//新增
+  print_thr_adress_string(0x12,0x50,buf_null);
+  char cmd[6] = {0};
+  sprintf_P(cmd,"%d%%",feedrate_percentage);
+  print_thr_adress_string(0x12,0x50,cmd);//新增
   if (!parser.seen_any()) {
     SERIAL_ECHOPAIR("FR:", feedrate_percentage);
     SERIAL_CHAR('%');

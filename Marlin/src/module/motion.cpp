@@ -220,10 +220,29 @@ void report_real_position() {
 
 // Report the logical current position according to the most recent G-code command
 void report_current_position() {
+  const xyz_pos_t lpos = current_position.asLogical();//新增
+  SERIAL_ECHOPAIR("X:", lpos.x, " Y:", lpos.y, " Z:", lpos.z, " E:", current_position.e);
+  char cmd[8] = {0};
+  char buf_NULL[7] = "      ";
+  dtostrf(lpos.x,1,2,cmd);
+  print_thr_adress_string(0x12,0x08,buf_NULL);
+  print_thr_adress_string(0x12,0x08,cmd);
+  dtostrf(lpos.y,1,2,cmd);
+  print_thr_adress_string(0x12,0x10,buf_NULL);
+  print_thr_adress_string(0x12,0x10,cmd);
+  dtostrf(lpos.z,1,2,cmd);
+  print_thr_adress_string(0x12,0x18,buf_NULL);
+  print_thr_adress_string(0x12,0x18,cmd);//新增
+
+
   report_logical_position(current_position);
   report_more_positions();
 }
-
+float get_Z_pos()//新增
+{
+  const xyz_pos_t lpos = current_position.asLogical();
+  return lpos.z;
+}
 /**
  * Report the logical current position according to the most recent G-code command.
  * The planner.position always corresponds to the last G-code too. This makes M114

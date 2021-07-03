@@ -170,10 +170,32 @@ void GcodeSuite::get_destination_from_command() {
     if (recovery.enabled && IS_SD_PRINTING() && seen.e && (seen.x || seen.y))
       recovery.save();
   #endif
-
+   if (seen.z) 
+ {
+  buf_clear(0x15,0x28,8);//新增，在1528写Z坐标
+  char buf_Zp[10] = {0};
+  char str_1[8] = {0};
+  sprintf_P(buf_Zp,"Z:%s",dtostrf(destination[Z_AXIS],4,2,str_1));
+  print_thr_adress_string(0x15,0x28,buf_Zp);
+ }
   if (parser.linearval('F') > 0)
+  {
     feedrate_mm_s = parser.value_feedrate();
-
+    buf_clear(0x15,0x20,7);//新增，在1520写速度
+    feedRate_t feed = feedrate_mm_s * feedrate_percentage/100;
+    if(feed > 300)
+    {
+      feed = 300;
+    }
+    if(feed < 10)
+    {
+      feed = 10;
+    }
+    char buf[7] = {0};
+    char str_1[3] = {0};
+    sprintf_P(buf,"%smm/s",dtostrf(feed,2,0,str_1));
+    print_thr_adress_string(0x15,0x20,buf);//新增
+  }
   #if ENABLED(PRINTCOUNTER)
     if (!DEBUGGING(DRYRUN) && !skip_move)
       print_job_timer.incFilamentUsed(destination.e - current_position.e);

@@ -188,8 +188,23 @@
  *   E - Report E stepper position (Requires M114_DETAIL)
  *   R - Report the realtime position instead of projected.
  */
+uint16_t Flsun_language = 1;//新增
+extern millis_t total_time;//新增
 void GcodeSuite::M114() {
-
+  if(parser.seen('L'))//新增
+    {
+      Flsun_language = parser.value_byte();
+    }
+  else if(parser.seen('H'))//新增
+  {
+    total_time = parser.value_ulong();
+  }
+  else if(parser.seen('T'))//新增
+  {
+    jump_to(parser.value_byte());
+  }
+  else
+ {
   #if ENABLED(M114_DETAIL)
     if (parser.seen('D')) {
       #if DISABLED(M114_LEGACY)
@@ -208,7 +223,8 @@ void GcodeSuite::M114() {
   #if ENABLED(M114_REALTIME)
     if (parser.seen('R')) { report_real_position(); return; }
   #endif
-
+  report_current_position();//新增
   TERN_(M114_LEGACY, planner.synchronize());
   report_current_position_projected();
+}
 }

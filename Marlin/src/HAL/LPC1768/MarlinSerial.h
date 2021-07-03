@@ -53,9 +53,32 @@ public:
     }
   #endif
 };
-
+#define IDLE        0
+#define WORKING     1
+#define PAUSING     2
+#define PAUSE      3
+#define REPRINTING  4
+#define REPRINTED   5
+#define RESUMING    6
+#define STOP        7
 typedef Serial0Type<MarlinSerial> MSerialT;
 extern MSerialT MSerial;
 extern MSerialT MSerial1;
 extern MSerialT MSerial2;
 extern MSerialT MSerial3;
+void change_button(int adress_high,int adress_low,int var);
+void jump_to(int adress);
+void get_serial1_commands(void);
+void print_thr_count_page(int file_count,int page_flage);
+void print_thr_adress_string(int high_adress,int low_adress,char *src);
+void buf_clear(int high_adress,int low_adress,int num);
+void printer_state_deal();
+void pause_resume();
+void change_en();
+void change_zh_CN();
+void change_zh_TW();
+void change_ru();
+void change_fr();
+void change_es();
+void change_de();
+void change_jp();

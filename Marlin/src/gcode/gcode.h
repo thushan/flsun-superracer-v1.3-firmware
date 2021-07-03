@@ -904,3 +904,5 @@ private:
 };
 
 extern GcodeSuite gcode;
+
+void tmc_set_XYZ(const bool enable);//新增

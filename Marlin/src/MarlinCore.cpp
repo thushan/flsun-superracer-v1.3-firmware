@@ -57,6 +57,9 @@
 #include "gcode/gcode.h"
 #include "gcode/parser.h"
 #include "gcode/queue.h"
+extern int my_print_state;//新增
+extern bool tmc_jump;//新增
+extern uint16_t Flsun_language;//新增
 
 #include "feature/pause.h"
 #include "sd/cardreader.h"
@@ -379,11 +382,20 @@ void startOrResumeJob() {
     #ifdef EVENT_GCODE_SD_ABORT
       queue.inject_P(PSTR(EVENT_GCODE_SD_ABORT));
     #endif
-
+    jump_to(01);//新增
     TERN_(PASSWORD_AFTER_SD_PRINT_ABORT, password.lock_machine());
   }
-
+  extern millis_t total_time;//新增，分钟
   inline void finishSDPrinting() {
+    millis_t t = print_job_timer.duration();//新增
+       total_time += t/60;
+       char cmd[5] = {0};
+       char buf_null[5] = {     };
+       sprintf_P(cmd,"%ld",total_time/60);
+       print_thr_adress_string(0x17,0x00,buf_null);
+       print_thr_adress_string(0x17,0x00,cmd);
+       settings.save();
+       my_print_state = IDLE;
     if (queue.enqueue_one_P(PSTR("M1001"))) {
       marlin_state = MF_RUNNING;
       TERN_(PASSWORD_AFTER_SD_PRINT_END, password.lock_machine());
@@ -631,7 +643,7 @@ void idle(TERN_(ADVANCED_PAUSE_FEATURE, bool no_stepper_sleep/*=false*/)) {
   if (marlin_state == MF_INITIALIZING) goto IDLE_DONE;
 
   // Handle filament runout sensors
-  TERN_(HAS_FILAMENT_SENSOR, runout.run());
+  //改动 TERN_(HAS_FILAMENT_SENSOR, runout.run());
 
   // Run HAL idle tasks
   TERN_(HAL_IDLETASK, HAL_idletask());
@@ -1043,7 +1055,7 @@ void setup() {
   #if BOTH(SDSUPPORT, SDCARD_EEPROM_EMULATION)
     SETUP_RUN(card.mount());          // Mount media with settings before first_load
   #endif
-
+  card.mount();//新增
   SETUP_RUN(settings.first_load());   // Load data from EEPROM if available (or use defaults)
                                       // This also updates variables in the planner, elsewhere
 
@@ -1256,6 +1268,54 @@ void setup() {
   marlin_state = MF_RUNNING;
 
   SETUP_LOG("setup() completed.");
+
+  if(Flsun_language == 1)//英语 新增
+  {
+    change_en();
+  }
+  else if(Flsun_language == 2)//中文简体
+  {
+    change_zh_CN();
+  }
+  else if(Flsun_language == 3)//中文繁体
+  {
+    change_zh_TW();
+  }
+  else if(Flsun_language == 4)//俄语
+  {
+    change_ru();
+  }
+  else if(Flsun_language == 5)//法语
+  {
+    change_fr();
+  }
+  else if(Flsun_language == 6)//西班牙语
+  {
+    change_es();
+  }
+  else if(Flsun_language == 7)//德语
+  {
+    change_de();
+  }
+  else if(Flsun_language == 8)//日语
+  {
+    change_jp();
+  }
+  char cmd[5] = {0};//新增
+  sprintf_P(cmd,"%ld",total_time/60);
+  print_thr_adress_string(0x17,0x00,cmd);
+  print_thr_adress_string(0x13,0x40,"V1.2.1");//显示版本号
+  print_thr_adress_string(0x13,0x30,"Marlin 2.0.8");//显示版本号
+  if(recovery.exists())//新增
+  {
+    jump_to(04);
+    my_print_state = PAUSING;//暂停
+  }
+  else
+  {
+    jump_to(01);
+  }
+  
 }
 
 /**
@@ -1271,6 +1331,7 @@ void setup() {
  *    card, host, or by direct injection. The queue will continue to fill
  *    as long as idle() or manage_inactivity() are being called.
  */
+long tmc_num = 0;//新增
 void loop() {
   do {
     idle();
@@ -1279,7 +1340,19 @@ void loop() {
       if (card.flag.abort_sd_printing) abortSDPrinting();
       if (marlin_state == MF_SD_COMPLETE) finishSDPrinting();
     #endif
-
+    
+    if(tmc_jump == true)
+    {
+      if(tmc_num > 200)
+      {
+        tmc_set_XYZ(1);
+        settings.save();
+        jump_to(0x02);
+        tmc_num = 0;
+        tmc_jump = false;
+      }
+      tmc_num++;
+    }
     queue.advance();
 
     endstops.event_handler();

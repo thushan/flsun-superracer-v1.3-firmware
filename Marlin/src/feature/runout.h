@@ -42,7 +42,8 @@
 #ifndef FILAMENT_RUNOUT_THRESHOLD
   #define FILAMENT_RUNOUT_THRESHOLD 5
 #endif
-
+extern float e_current;//新增
+extern long run_out_flag;//新增
 void event_filament_runout();
 
 template<class RESPONSE_T, class SENSOR_T>
@@ -112,19 +113,35 @@ class TFilamentMonitor : public FilamentMonitorBase {
         sensor.block_completed(b);
       }
     }
-
+    static inline bool is_runout()//新增
+    {
+      response.run();
+      sensor.run();
+      return response.has_run_out();
+    }
     // Give the response a chance to update its counter.
-    static inline void run() {
+    static inline void my_run() {//新增
       if (enabled && !filament_ran_out && (printingIsActive() || did_pause_print)) {
         TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, cli()); // Prevent RunoutResponseDelayed::block_completed from accumulating here
         response.run();
         sensor.run();
         const bool ran_out = response.has_run_out();
         TERN_(HAS_FILAMENT_RUNOUT_DISTANCE, sei());
-        if (ran_out) {
-          filament_ran_out = true;
-          event_filament_runout();
-          planner.synchronize();
+        if(ran_out)
+        {
+          run_out_flag++;
+          if(run_out_flag == 1)
+          {
+            e_current = current_position.e;
+          }
+          if((run_out_flag > 1) && (current_position.e > e_current + FILAMENT_RUNOUT_DISTANCE_MM))//新增，耗材耗尽暂停放在传感器触发后的几mm后
+          {
+            filament_ran_out = true;
+           jump_to(0x22);
+           e_current = current_position.e;//新增,进入换料页面前保存挤出机坐标
+           pause_resume();
+           run_out_flag = 0;
+          }
         }
       }
     }
